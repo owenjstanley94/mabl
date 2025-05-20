@@ -14,14 +14,24 @@ class Official extends Model
         parent::boot();
 
         static::creating(function ($official) {
-            if (empty($official->slug)) {
-                $official->slug = Str::slug($official->name);
+            $baseSlug = \Illuminate\Support\Str::slug($official->name);
+            $slug = $baseSlug;
+            $i = 2;
+            while (\App\Models\Official::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $i++;
             }
+            $official->slug = $slug;
         });
 
         static::updating(function ($official) {
             if ($official->isDirty('name') && !$official->isDirty('slug')) {
-                $official->slug = Str::slug($official->name);
+                $baseSlug = \Illuminate\Support\Str::slug($official->name);
+                $slug = $baseSlug;
+                $i = 2;
+                while (\App\Models\Official::where('slug', $slug)->where('id', '!=', $official->id)->exists()) {
+                    $slug = $baseSlug . '-' . $i++;
+                }
+                $official->slug = $slug;
             }
         });
     }

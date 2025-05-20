@@ -12,11 +12,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('officials', function (Blueprint $table) {
-            $table->enum('role', ['referee', 'table'])->default('referee')->change();
-        });
-        // Set all existing entries to 'referee'
-        DB::table('officials')->update(['role' => 'referee']);
+        // Change type to varchar(255)
+        DB::statement("ALTER TABLE officials ALTER COLUMN role TYPE varchar(255)");
+        // Set default
+        DB::statement("ALTER TABLE officials ALTER COLUMN role SET DEFAULT 'Referee'");
+        // Set NOT NULL
+        DB::statement("ALTER TABLE officials ALTER COLUMN role SET NOT NULL");
+        // Add check constraint
+        DB::statement("ALTER TABLE officials ADD CONSTRAINT role_check_lower CHECK (role IN ('Referee', 'Table'))");
+        // Set all existing entries to 'Referee'
+        DB::table('officials')->update(['role' => 'Referee']);
     }
 
     /**
@@ -24,8 +29,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('officials', function (Blueprint $table) {
-            $table->string('role')->nullable()->change();
-        });
+        // Drop check constraint
+        DB::statement("ALTER TABLE officials DROP CONSTRAINT IF EXISTS role_check_lower");
+        // Change type back to varchar(255)
+        DB::statement("ALTER TABLE officials ALTER COLUMN role TYPE varchar(255)");
+        // Drop default
+        DB::statement("ALTER TABLE officials ALTER COLUMN role DROP DEFAULT");
+        // Drop NOT NULL
+        DB::statement("ALTER TABLE officials ALTER COLUMN role DROP NOT NULL");
     }
 };
