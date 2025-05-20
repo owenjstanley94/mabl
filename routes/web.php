@@ -1,13 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TeamController;
+use App\Livewire\OfficialProfile;
+use App\Models\Official;
 
 Route::get('/', function () {
     return view('pages.home');
-});
-
-Route::get('/results', function () {
-    return view('pages.results');
 });
 
 Route::get('/fixtures', function () {
@@ -18,6 +17,7 @@ Route::get('/teams', function () {
     return view('pages.teams');
 });
 
+Route::get('/teams/{team:slug}', [TeamController::class, 'show'])->name('teams.show');
 
 Route::get('/cup', function () {
     return view('pages.cup');
@@ -34,4 +34,8 @@ Route::get('/organisation', function () {
 Route::get('/notices', function () {
     return view('pages.notices');
 });
+
+Route::get('/officials/{official:slug}', function (Official $official) {
+    return view('officials.show', compact('official'));
+})->name('officials.show');
 

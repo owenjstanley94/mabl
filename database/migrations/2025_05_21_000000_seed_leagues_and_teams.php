@@ -417,6 +417,7 @@ return new class extends Migration
                 'referee1' => 'S.Viveash',
                 'referee2' => 'T.Crowther',
                 'table_official' => null,
+                'date' => '2024-05-20',
             ],
             [
                 'league' => 'Premier',
@@ -427,6 +428,7 @@ return new class extends Migration
                 'referee1' => 'D.Woods',
                 'referee2' => 'J.Jackson',
                 'table_official' => null,
+                'date' => '2024-05-22',
             ],
             [
                 'league' => 'Premier',
@@ -437,6 +439,7 @@ return new class extends Migration
                 'referee1' => 'J.Jackson',
                 'referee2' => 'S.Viveash',
                 'table_official' => null,
+                'date' => '2024-05-23',
             ],
             [
                 'league' => 'Premier',
@@ -447,6 +450,7 @@ return new class extends Migration
                 'referee1' => 'S.Viveash',
                 'referee2' => 'S.Guebaiti',
                 'table_official' => null,
+                'date' => '2024-05-23',
             ],
         ];
         foreach ($fixtures as $fixture) {
@@ -455,8 +459,6 @@ return new class extends Migration
             $awayTeam = \App\Models\Team::where('name', $fixture['away_team'])->first();
             $ref1 = \App\Models\Official::whereRaw("REPLACE(name, ' ', '') = ?", [str_replace('.', '', $fixture['referee1'])])->first();
             $ref2 = \App\Models\Official::whereRaw("REPLACE(name, ' ', '') = ?", [str_replace('.', '', $fixture['referee2'])])->first();
-            $tipDay = $homeTeam?->tip_day ?? $fixture['tip_day'];
-            $tipTime = $homeTeam?->tip_time ?? $fixture['tip_time'];
             if ($leagueId && $homeTeam && $awayTeam) {
                 DB::table('fixtures')->insert([
                     'league_id' => $leagueId,
@@ -465,8 +467,7 @@ return new class extends Migration
                     'crew_chief_id' => $ref1?->id,
                     'referee_1_id' => $ref2?->id,
                     'referee_2_id' => null,
-                    'tip_day' => $tipDay,
-                    'tip_time' => $tipTime,
+                    'date' => $fixture['date'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

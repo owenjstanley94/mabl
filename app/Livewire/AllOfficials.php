@@ -3,56 +3,49 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
 use App\Models\Official;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Actions\Action;
 
-class AllOfficials extends Component implements HasTable, HasForms
+class AllOfficials extends Component
 {
+    public $search = '';
+    public $roleFilter = '';
+    public $sortBy = 'name';
+    public $sortDirection = 'asc';
 
-    use InteractsWithTable;
-    use InteractsWithForms;
-
-    public function table(Table $table): Table
+    public function sort($column)
     {
-        return $table
-            ->paginated(false)
-            ->query(Official::query())
-            ->columns([
-                TextColumn::make('name')
-                    ->searchable()
-                    ->extraAttributes(['class' => 'font-bold']),
-                TextColumn::make('email'),
-                TextColumn::make('role')
-                    ->badge(),
-                TextColumn::make('licence_number'),
-                TextColumn::make('level'),
-            ])
-            ->filters([
-                SelectFilter::make('role')
-                    ->options(Official::query()->pluck('role', 'role')->unique()->toArray()),
-            ])
-            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContent)
-            ->actions([
-                Action::make('email')
-                    ->icon('heroicon-o-envelope')
-                    ->label('Email')
-                    ->url(fn($record) => 'mailto:' . $record->email . '?subject=' . urlencode('MABL'))
-                    ->openUrlInNewTab(),
-            ])
-            ->bulkActions([
-                // ...
-            ]);
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function officials()
+    {
+        $query = Official::query();
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('email', 'like', '%' . $this->search . '%')
+                  ->orWhere('licence_number', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->roleFilter) {
+            $query->where('role', $this->roleFilter);
+        }
+
+        return $query->orderBy($this->sortBy, $this->sortDirection)->paginate(10);
     }
 
     public function render()
     {
-        return view('livewire.all-officials');
+        return view('livewire.all-officials', [
+            'roles' => Official::query()->pluck('role')->unique()->values(),
+        ]);
     }
 }

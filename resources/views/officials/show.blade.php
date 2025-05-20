@@ -1,7 +1,5 @@
 @extends('layouts.app')
 
-@section('title', 'Fixtures')
-
 @section('content')
-
+    <livewire:official-profile :official="$official" />
 @endsection 

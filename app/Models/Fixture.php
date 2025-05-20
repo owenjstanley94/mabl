@@ -13,6 +13,11 @@ class Fixture extends Model
         'crew_chief_id',
         'referee_1_id',
         'referee_2_id',
+        'date',
+    ];
+
+    protected $casts = [
+        'date' => 'date',
     ];
 
     public function league()

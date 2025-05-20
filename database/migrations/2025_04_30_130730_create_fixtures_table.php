@@ -19,6 +19,9 @@ return new class extends Migration
             $table->foreignId('crew_chief_id')->nullable()->constrained('officials')->onDelete('set null');
             $table->foreignId('referee_1_id')->nullable()->constrained('officials')->onDelete('set null');
             $table->foreignId('referee_2_id')->nullable()->constrained('officials')->onDelete('set null');
+            $table->date('date')->required();
+            $table->unsignedSmallInteger('home_team_score')->nullable();
+            $table->unsignedSmallInteger('away_team_score')->nullable();
             $table->timestamps();
         });
     }

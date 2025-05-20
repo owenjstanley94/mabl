@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 
 class FixtureResource extends Resource
 {
@@ -38,6 +40,11 @@ class FixtureResource extends Resource
                     ->relationship('referee1', 'name'),
                 Forms\Components\Select::make('referee_2_id')
                     ->relationship('referee2', 'name'),
+                DatePicker::make('date')
+                    ->label('Date')
+                    ->required(),
+                TextInput::make('home_team_score')->numeric()->minValue(0)->maxValue(999)->label('Home Score')->nullable(),
+                TextInput::make('away_team_score')->numeric()->minValue(0)->maxValue(999)->label('Away Score')->nullable(),
             ]);
     }
 
@@ -52,6 +59,23 @@ class FixtureResource extends Resource
                 Tables\Columns\TextColumn::make('crewChief.name')->label('Crew Chief'),
                 Tables\Columns\TextColumn::make('referee1.name')->label('Referee 1'),
                 Tables\Columns\TextColumn::make('referee2.name')->label('Referee 2'),
+                Tables\Columns\TextColumn::make('score')
+                    ->label('Result')
+                    ->formatStateUsing(function ($record) {
+                        if (is_null($record->home_team_score) || is_null($record->away_team_score)) {
+                            return '';
+                        }
+                        $home = $record->home_team_score;
+                        $away = $record->away_team_score;
+                        if ($home > $away) {
+                            return "<strong>{$home}</strong> - {$away}";
+                        } elseif ($away > $home) {
+                            return "{$home} - <strong>{$away}</strong>";
+                        } else {
+                            return "{$home} - {$away}";
+                        }
+                    })
+                    ->html(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime(),
             ])

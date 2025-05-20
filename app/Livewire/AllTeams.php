@@ -17,6 +17,40 @@ class AllTeams extends Component implements HasTable, HasForms
     use InteractsWithTable;
     use InteractsWithForms;
     
+    public $search = '';
+    public $leagueFilter = '';
+    public $sortBy = 'name';
+    public $sortDirection = 'asc';
+
+    public function sort($column)
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function teams()
+    {
+        $query = Team::query()->with('league');
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('court', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->leagueFilter) {
+            $query->where('league_id', $this->leagueFilter);
+        }
+
+        return $query->orderBy($this->sortBy, $this->sortDirection)->paginate(10);
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -62,6 +96,8 @@ class AllTeams extends Component implements HasTable, HasForms
 
     public function render()
     {
-        return view('livewire.all-teams');
+        return view('livewire.all-teams', [
+            'leagues' => \App\Models\League::pluck('name', 'id'),
+        ]);
     }
 }
