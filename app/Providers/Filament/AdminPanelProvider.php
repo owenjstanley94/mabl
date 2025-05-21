@@ -39,9 +39,6 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
-                \App\Filament\Widgets\GamesThisWeekWidget::class,
-                \App\Filament\Widgets\GamesThisSeasonWidget::class,
-                \App\Filament\Widgets\UnresolvedGamesWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
 class CreateFilamentUser extends Command
 {
@@ -43,10 +45,13 @@ class CreateFilamentUser extends Command
             'password' => Hash::make($password),
         ]);
 
+        // Assign Filament user role
+        $user->assignRole('filament_user');
+
         $this->info('User created successfully!');
         $this->table(
-            ['Name', 'Email'],
-            [[$user->name, $user->email]]
+            ['Name', 'Email', 'Role'],
+            [[$user->name, $user->email, 'filament_user']]
         );
 
         return 0;
