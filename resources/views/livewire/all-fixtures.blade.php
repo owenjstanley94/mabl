@@ -19,6 +19,14 @@
                 @endforeach
             </flux:select>
         </div>
+        <div>
+            <flux:button
+                wire:click="toggleThisWeek"
+                :variant="$thisWeekOnly ? 'primary' : 'outline'"
+            >
+                This Week Only
+            </flux:button>
+        </div>
     </div>
 
     @if($this->fixtures->isEmpty())
@@ -30,6 +38,7 @@
         <flux:table>
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'date'" :direction="$sortDirection" wire:click="sort('date')">Date</flux:table.column>
+                <flux:table.column>Tip Time</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'league_id'" :direction="$sortDirection" wire:click="sort('league_id')">League</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'home_team_id'" :direction="$sortDirection" wire:click="sort('home_team_id')">Home Team</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'away_team_id'" :direction="$sortDirection" wire:click="sort('away_team_id')">Away Team</flux:table.column>
@@ -38,12 +47,14 @@
                 <flux:table.column>Referee 2</flux:table.column>
                 <flux:table.column>Home Score</flux:table.column>
                 <flux:table.column>Away Score</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @foreach($this->fixtures as $fixture)
                     <flux:table.row :key="$fixture->id">
                         <flux:table.cell>{{ $fixture->date->format('d-m-y') }}</flux:table.cell>
+                        <flux:table.cell>{{ $fixture->tip_time }}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" inset="top bottom">{{ $fixture->league->name }}</flux:badge>
                         </flux:table.cell>
@@ -69,6 +80,21 @@
                             @if(!is_null($fixture->away_team_score))
                                 {{ $fixture->away_team_score }}
                             @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @php
+                                $statusColor = match($fixture->status) {
+                                    'planned' => 'gray',
+                                    'confirmed' => 'blue',
+                                    'completed' => 'green',
+                                    'forfeited' => 'red',
+                                    'contested' => 'orange',
+                                    default => 'gray',
+                                };
+                            @endphp
+                            <flux:badge size="sm" color="{{ $statusColor }}" inset="top bottom">
+                                {{ ucfirst($fixture->status) }}
+                            </flux:badge>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach

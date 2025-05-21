@@ -21,6 +21,7 @@ class AllFixtures extends Component implements HasTable, HasForms
     public $search = '';
     public $leagueFilter = '';
     public $teamFilter = '';
+    public $thisWeekOnly = false;
     public $sortBy = 'date';
     public $sortDirection = 'asc';
 
@@ -39,47 +40,47 @@ class AllFixtures extends Component implements HasTable, HasForms
         }
     }
 
+    public function toggleThisWeek()
+    {
+        $this->thisWeekOnly = !$this->thisWeekOnly;
+    }
+
     #[\Livewire\Attributes\Computed]
     public function fixtures()
     {
         $query = Fixture::query()
-            ->with(['homeTeam', 'awayTeam', 'league', 'crewChief', 'referee1', 'referee2']);
-
-        if ($this->search) {
-            $query->where(function($q) {
-                $q->whereHas('homeTeam', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })
-                ->orWhereHas('awayTeam', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })
-                ->orWhereHas('league', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })
-                ->orWhereHas('crewChief', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })
-                ->orWhereHas('referee1', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })
-                ->orWhereHas('referee2', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
+            ->with(['homeTeam', 'awayTeam', 'league', 'crewChief', 'referee1', 'referee2'])
+            ->when($this->search, function ($query) {
+                $query->where(function ($query) {
+                    $query->whereHas('homeTeam', function ($query) {
+                        $query->where('name', 'like', '%' . $this->search . '%');
+                    })
+                    ->orWhereHas('awayTeam', function ($query) {
+                        $query->where('name', 'like', '%' . $this->search . '%');
+                    })
+                    ->orWhereHas('league', function ($query) {
+                        $query->where('name', 'like', '%' . $this->search . '%');
+                    });
                 });
-            });
-        }
+            })
+            ->when($this->leagueFilter, function ($query) {
+                $query->where('league_id', $this->leagueFilter);
+            })
+            ->when($this->teamFilter, function ($query) {
+                $query->where(function ($query) {
+                    $query->where('home_team_id', $this->teamFilter)
+                        ->orWhere('away_team_id', $this->teamFilter);
+                });
+            })
+            ->when($this->thisWeekOnly, function ($query) {
+                $query->whereBetween('date', [
+                    now()->startOfWeek(),
+                    now()->endOfWeek()
+                ]);
+            })
+            ->orderBy($this->sortBy, $this->sortDirection);
 
-        if ($this->leagueFilter) {
-            $query->where('league_id', $this->leagueFilter);
-        }
-
-        if ($this->teamFilter) {
-            $query->where(function($q) {
-                $q->where('home_team_id', $this->teamFilter)
-                  ->orWhere('away_team_id', $this->teamFilter);
-            });
-        }
-
-        return $query->orderBy($this->sortBy, $this->sortDirection)->paginate(10);
+        return $query->paginate(10);
     }
 
     #[\Livewire\Attributes\Computed]

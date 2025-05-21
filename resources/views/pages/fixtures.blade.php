@@ -3,5 +3,5 @@
 @section('title', 'Fixtures')
 
 @section('content')
-@livewire('all-fixtures')
+    @livewire('all-fixtures')
 @endsection 

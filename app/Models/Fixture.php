@@ -14,11 +14,25 @@ class Fixture extends Model
         'referee_1_id',
         'referee_2_id',
         'date',
+        'home_team_score',
+        'away_team_score',
+        'status',
     ];
 
     protected $casts = [
         'date' => 'date',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($fixture) {
+            if (empty($fixture->tip_time) && $fixture->homeTeam) {
+                $fixture->tip_time = $fixture->homeTeam->tip_time;
+            }
+        });
+    }
 
     public function league()
     {
@@ -55,7 +69,34 @@ class Fixture extends Model
         return $this->homeTeam ? $this->homeTeam->tip_day : null;
     }
 
-    public function getTipTimeAttribute()
+    public function getTipTimeAttribute($value)
+    {
+        if (!$this->homeTeam) {
+            return null;
+        }
+        return $this->homeTeam->tip_time;
+    }
+
+    public function setTipTimeAttribute($value)
+    {
+        if (!$value) {
+            $this->attributes['tip_time'] = null;
+            return;
+        }
+        $this->attributes['tip_time'] = date('H:i', strtotime($value));
+    }
+
+    public function getStatusAttribute($value)
+    {
+        // If scores are present, the game is completed
+        if (!is_null($this->home_team_score) && !is_null($this->away_team_score)) {
+            return 'completed';
+        }
+        
+        return $value;
+    }
+
+    public function getHomeTeamTipTimeAttribute()
     {
         return $this->homeTeam ? $this->homeTeam->tip_time : null;
     }

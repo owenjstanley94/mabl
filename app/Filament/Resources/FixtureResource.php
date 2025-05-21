@@ -30,7 +30,16 @@ class FixtureResource extends Resource
                     ->required(),
                 Forms\Components\Select::make('home_team_id')
                     ->relationship('homeTeam', 'name')
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        if ($state) {
+                            $team = \App\Models\Team::find($state);
+                            if ($team && $team->tip_time) {
+                                $set('tip_time', $team->tip_time);
+                            }
+                        }
+                    }),
                 Forms\Components\Select::make('away_team_id')
                     ->relationship('awayTeam', 'name')
                     ->required(),
@@ -42,9 +51,56 @@ class FixtureResource extends Resource
                     ->relationship('referee2', 'name'),
                 DatePicker::make('date')
                     ->label('Date')
+                    ->required()
+                    ->helperText(function ($record) {
+                        if ($record && $record->homeTeam) {
+                            return "Home team's usual game night is: {$record->homeTeam->tip_day}";
+                        }
+                        return null;
+                    }),
+                TextInput::make('tip_time')
+                    ->label('Tip Time')
+                    ->helperText(function ($record) {
+                        if ($record && $record->homeTeam) {
+                            return "The home team's normal tip time is: {$record->homeTeam->tip_time}";
+                        }
+                        return null;
+                    })
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return null;
+                        return date('H:i', strtotime($state));
+                    })
+                    ->dehydrateStateUsing(function ($state) {
+                        if (!$state) return null;
+                        return date('H:i', strtotime($state));
+                    })
                     ->required(),
-                TextInput::make('home_team_score')->numeric()->minValue(0)->maxValue(999)->label('Home Score')->nullable(),
-                TextInput::make('away_team_score')->numeric()->minValue(0)->maxValue(999)->label('Away Score')->nullable(),
+                TextInput::make('home_team_score')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(999)
+                    ->label('Home Score')
+                    ->nullable()
+                    ->rules(['nullable', 'integer', 'min:0', 'max:999'])
+                    ->validationAttribute('home team score'),
+                TextInput::make('away_team_score')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(999)
+                    ->label('Away Score')
+                    ->nullable()
+                    ->rules(['nullable', 'integer', 'min:0', 'max:999'])
+                    ->validationAttribute('away team score'),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'planned' => 'Planned',
+                        'confirmed' => 'Confirmed',
+                        'completed' => 'Completed',
+                        'forfeited' => 'Forfeited',
+                        'contested' => 'Contested',
+                    ])
+                    ->default('planned')
+                    ->required(),
             ]);
     }
 
@@ -53,6 +109,14 @@ class FixtureResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id'),
+                Tables\Columns\TextColumn::make('date')
+                    ->date('d-m-y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tip_time')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return null;
+                        return date('H:i', strtotime($state));
+                    }),
                 Tables\Columns\TextColumn::make('league.name')->label('League'),
                 Tables\Columns\TextColumn::make('homeTeam.name')->label('Home Team'),
                 Tables\Columns\TextColumn::make('awayTeam.name')->label('Away Team'),
@@ -76,6 +140,16 @@ class FixtureResource extends Resource
                         }
                     })
                     ->html(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'planned' => 'gray',
+                        'confirmed' => 'blue',
+                        'completed' => 'green',
+                        'forfeited' => 'red',
+                        'contested' => 'orange',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime(),
             ])

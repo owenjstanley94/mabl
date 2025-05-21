@@ -29,7 +29,18 @@ class TeamResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('court'),
                 Forms\Components\TextInput::make('tip_day'),
-                Forms\Components\TextInput::make('tip_time'),
+                Forms\Components\TextInput::make('tip_time')
+                    ->label('Tip Time')
+                    ->placeholder('e.g. 19:45')
+                    ->helperText('Enter time in 24-hour format (e.g. 19:45)')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return null;
+                        return date('H:i', strtotime($state));
+                    })
+                    ->dehydrateStateUsing(function ($state) {
+                        if (!$state) return null;
+                        return date('H:i', strtotime($state));
+                    }),
             ]);
     }
 
